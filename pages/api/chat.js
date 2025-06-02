@@ -1,11 +1,14 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method Not Allowed' });
+    return;
+  }
 
   const { prompt } = req.body;
   const apiKey = process.env.GROQ_API_KEY;
 
   try {
-    const groqRes = await fetch('https://api.groq.ai/v1/chat/completions', {
+    const groqResponse = await fetch('https://api.groq.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -19,11 +22,10 @@ export default async function handler(req, res) {
       }),
     });
 
-    const data = await groqRes.json();
+    const data = await groqResponse.json();
     const content = data.choices?.[0]?.message?.content ?? 'No response.';
-
     res.status(200).json({ content });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch response from Groq API.' });
   }
 }
